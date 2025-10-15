@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Regional Caribbean HIV Dashboard • Rodrigue Nze Eyo’o</title>
+  <meta name="description" content="One‑page portfolio showcasing an interactive regional Caribbean HIV dashboard with country & indicator filters, built for UNAIDS / PANCAP collaboration." />
+  <style>
+    :root{
+      /* Gabon-inspired palette blended with Caribbean hues */
+      --bg: #0a1320;                 /* deep midnight blue */
+      --bg-accent: radial-gradient(1200px 800px at 20% -10%, #0d2b4a 0%, transparent 60%),
+                   radial-gradient(900px 700px at 110% 20%, #0f4c3a 0%, transparent 60%),
+                   radial-gradient(700px 500px at 40% 120%, #2a7a2e 0%, transparent 60%);
+      --panel: rgba(255,255,255,0.08);
+      --panel-2: rgba(255,255,255,0.06);
+      --text: #eaf2fb;
+      --muted: #a8bfd6;
+      --primary: #2fbf71;           /* green */
+      --accent: #ffcc00;            /* yellow */
+      --danger: #e44141;            /* red */
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 20px;
+      --radius-xl: 28px;
+    }
+    html, body{ height:100%; }
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      background: var(--bg); color: var(--text); line-height:1.5;
+      background-image: var(--bg-accent);
+      background-attachment: fixed; background-repeat: no-repeat; background-size: cover;
+    }
+    a{ color: #8fd8ff; text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+    .wrapper{ max-width: 1200px; margin: 0 auto; padding: 24px; }
+    header.hero{ padding: 72px 0 32px; position: relative; }
+    .glass{ background: var(--panel); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px); box-shadow: var(--shadow); border-radius: var(--radius-xl); }
+    .hero-card{ display:grid; grid-template-columns: 120px 1fr; gap: 24px; padding: 24px; align-items:center; }
+    .avatar{ width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0)); border: 2px solid rgba(255,255,255,0.2); }
+    h1{ font-size: clamp(28px, 4vw, 48px); margin: 0 0 8px; letter-spacing: 0.3px; }
+    .subtitle{ font-size: 18px; color: var(--muted); margin-bottom: 6px; }
+    .badge{ display:inline-block; padding: 6px 10px; border-radius: 999px; background: linear-gradient(90deg, rgba(47,191,113,0.25), rgba(255,204,0,0.25)); border:1px solid rgba(255,255,255,0.15); font-size: 12px; }
+    nav.scroller{ display:flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    nav.scroller a{ display:inline-block; padding: 10px 14px; border-radius: 999px; background: var(--panel-2); border:1px solid rgba(255,255,255,0.12); }
+
+    section{ margin: 36px 0; }
+    section .section-title{ font-size: 22px; margin: 0 0 14px; letter-spacing: 0.4px; }
+    .grid{ display:grid; gap: 16px; }
+    @media (min-width: 900px){ .grid.cols-2{ grid-template-columns: 1fr 1fr; } }
+
+    .card{ padding: 18px; border-radius: var(--radius); background: var(--panel); border: 1px solid rgba(255,255,255,0.08); box-shadow: var(--shadow); }
+
+    /* Dashboard */
+    .filters{ display:grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 800px){ .filters{ grid-template-columns: 2fr 1fr; align-items: end; } }
+    label{ font-size: 13px; color: var(--muted); display:block; margin-bottom: 6px; }
+    select{ width: 100%; padding: 10px 12px; border-radius: 12px; background: #0e1a2b; color: var(--text); border:1px solid rgba(255,255,255,0.18); }
+
+    .heatmap{ display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+    .country-cell{ border-radius: 14px; padding: 14px; background: #0f1e30; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+    .country-name{ font-size: 14px; color:#d2e4f7; }
+    .country-value{ font-size: 28px; font-weight: 700; margin-top: 4px; }
+    .chip{ font-size: 12px; padding: 3px 8px; border-radius: 999px; border:1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.25); }
+
+    .legend{ display:flex; align-items:center; gap: 10px; margin-top: 8px; }
+    .gradient-bar{ height: 12px; flex:1; border-radius: 999px; background: linear-gradient(90deg, var(--danger), var(--accent), var(--primary)); border:1px solid rgba(255,255,255,0.15); }
+
+    /* Country deep-dive */
+    .country-deep{ margin-top: 20px; }
+    .bar{ height: 28px; border-radius: 999px; background: #0f1e30; border:1px solid rgba(255,255,255,0.1); overflow:hidden; position: relative; }
+    .bar > span{ display:block; height: 100%; }
+
+    footer{ margin: 56px 0 24px; text-align:center; color: var(--muted); font-size: 13px; }
+    .tiny{ font-size: 12px; color: var(--muted); }
+    .muted{ color: var(--muted); }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .notice{ font-size:13px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header class="hero">
+      <div class="hero-card glass">
+        <div class="avatar" aria-hidden="true"></div>
+        <div>
+          <span class="badge">Portfolio • Data for Impact</span>
+          <h1>Interactive Regional Caribbean HIV Dashboard</h1>
+          <div class="subtitle">by Rodrigue Nze Eyo’o — Physician‑epidemiologist & Senior Strategic Information Adviser</div>
+          <nav class="scroller">
+            <a href="#about">About me</a>
+            <a href="#overview">Dashboard overview</a>
+            <a href="#dashboard">Interactive dashboard</a>
+            <a href="#partners">Partners</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <section id="about">
+      <div class="grid cols-2">
+        <div class="card">
+          <h2 class="section-title">About me</h2>
+          <p>
+            Senior Strategic Information Adviser with 16+ years leading HIV Strategic Information & M&E across Africa and the Caribbean.
+            I turn surveillance, routine programme, survey and financial data into decisions, workplans and course‑corrections that improve
+            retention and viral load suppression. I convene regional knowledge‑exchange platforms and support Ministries of Health and
+            partners (PEPFAR/CDC, Global Fund, PAHO/WHO, CARPHA, PANCAP, civil society) to institutionalize data‑to‑action cycles.
+            Bilingual (English/French); experienced with Spectrum/Naomi/Goals, routine HIS strengthening and executive dashboards.
+          </p>
+          <p class="notice">Note: Contact details intentionally omitted here to reduce spam.</p>
+        </div>
+        <div class="card">
+          <h2 class="section-title">Dashboard overview</h2>
+          <p>
+            This one‑page site showcases an interactive Caribbean HIV dashboard prototype based on a regional KPI grid. Use the filters to
+            explore indicators and country performance. The heatmap uses a green→yellow→red gradient to reflect relative achievement levels.
+            Selecting a specific country reveals a concise, across‑indicator view.
+          </p>
+          <ul class="tiny">
+            <li>Data source: Regional KPI grid (Excel), parsed into JSON for this demo.</li>
+            <li>Design goals: fast, lightweight, no frameworks; elegant visuals; export‑ready views.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard">
+      <div class="card">
+        <h2 class="section-title">Interactive dashboard</h2>
+        <div class="filters">
+          <div>
+            <label for="indicatorSel">Filter by indicator</label>
+            <select id="indicatorSel"></select>
+          </div>
+          <div>
+            <label for="countrySel">Filter by country</label>
+            <select id="countrySel"></select>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="tiny">Low</span>
+          <div class="gradient-bar" aria-hidden="true"></div>
+          <span class="tiny">High</span>
+        </div>
+
+        <div id="heatmap" class="heatmap" aria-live="polite"></div>
+
+        <div id="countryDeep" class="country-deep"></div>
+      </div>
+    </section>
+
+    <section id="partners">
+      <div class="card">
+        <h2 class="section-title">Partners</h2>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>UNAIDS</h3>
+            <p class="muted">The Joint United Nations Programme on HIV/AIDS. Provides leadership, coordination, advocacy and data towards ending AIDS as a public health threat by 2030.</p>
+          </div>
+          <div class="card">
+            <h3>PANCAP</h3>
+            <p class="muted">Pan Caribbean Partnership Against HIV/AIDS — a multi‑sectoral regional partnership hosted by CARICOM, coordinating a unified response and knowledge‑sharing.</p>
+          </div>
+          <div class="card">
+            <h3>UNAIDS Multicountry Office for the Caribbean</h3>
+            <p class="muted">Regional hub supporting governments and communities with strategic direction, data, and technical assistance to accelerate 95‑95‑95 and rights‑based approaches.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div>© <span id="year"></span> Rodrigue Nze Eyo’o • Portfolio — Interactive Caribbean HIV Dashboard</div>
+      <div class="tiny">Prototype for demonstration and stakeholder conversations. Values are normalized for comparative visualization.</div>
+    </footer>
+  </div>
+
+  <!-- Embedded data (generated from the Excel KPI grid) -->
+  <script id="dashboard-data" type="application/json"></script>
+
+  <script>
+  // === Inject pre-parsed JSON (embedded below from server-side) ===
+  const RAW_JSON = `{
+  "metadata": {
+    "countries": [
+      "Antigua and Barbuda",
+      "Bahamas",
+      "Barbados",
+      "Belize",
+      "Cuba",
+      "Dominica",
+      "Dominican Republic",
+      "Grenada",
+      "Guyana",
+      "Haiti",
+      "Jamaica",
+      "St Kitts and Nevis",
+      "St Lucia",
+      "St Vincent & the Grenadines",
+      "Suriname",
+      "Trinidad and Tobago"
+    ],
+    "sheet": "KPIs Countries"
+  },
+  "records": [
+    {
+      "programme_area": "PrEP among Eligible Populations: HIV Program essentials-Prevention (KPI 0)",
+      "indicator_desc": "Coverage Rate of PrEP among Eligible Po... transgender people, sex workers, and serodiscordant couples. ",
+      "values": {
+        "Antigua and Barbuda": 0.8,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "HIV Testing-People living with HIV who know their status (KPI 1)",
+      "indicator_desc": "Percentage of people living with HIV who know their status.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Community-Based HIV Testing Services (KPI 1.1)",
+      "indicator_desc": "Percentage of HIV tests done at the community level.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.19,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Opt-Out Testing in Healthcare Settings (KPI 1.2)",
+      "indicator_desc": "Percentage of facilities implementing opt-out HIV testing.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Self-Testing Promotion (KPI 1.3)",
+      "indicator_desc": "Availability and promotion of HIV self-testing.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "MSM-Focused Testing Programs (KPI 1.4)",
+      "indicator_desc": "Coverage of testing services for men who have sex with men.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "FSW-Focused Testing Programs (KPI 1.5)",
+      "indicator_desc": "Coverage of testing services for female sex workers.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "TG-Focused Testing Programs (KPI 1.6)",
+      "indicator_desc": "Coverage of testing services for transgender individuals.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "People living with HIV who know their HIV status (95-1)",
+      "indicator_desc": "Proportion of PLHIV who know their status.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Immediate Treatment Initiation -Treat-All Approach (KPI 2.1)",
+      "indicator_desc": "Number of months in the year with immediate ART initiation (treat‑all).",
+      "values": {
+        "Antigua and Barbuda": 12.0,
+        "Bahamas": 12.0,
+        "Barbados": 12.0,
+        "Belize": 12.0,
+        "Cuba": 12.0,
+        "Dominica": 12.0,
+        "Dominican Republic": 12.0,
+        "Grenada": 12.0,
+        "Guyana": 12.0,
+        "Haiti": 12.0,
+        "Jamaica": 12.0,
+        "St Kitts and Nevis": 12.0,
+        "St Lucia": 12.0,
+        "St Vincent & the Grenadines": 12.0,
+        "Suriname": 16.0,
+        "Trinidad and Tobago": 12.0
+      }
+    },
+    {
+      "programme_area": "Integrated HIV Services (KPI 2.2)",
+      "indicator_desc": "Proportion of facilities providing integrated HIV services.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Continuity of Care (KPI 2.3)",
+      "indicator_desc": "Continuity of ART services / retention proxy.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "ARV medicine stock-out KPI (2.4)",
+      "indicator_desc": "Months in the year without ART stock-out.",
+      "values": {
+        "Antigua and Barbuda": 1.0,
+        "Bahamas": 1.0,
+        "Barbados": 1.0,
+        "Belize": 1.0,
+        "Cuba": 1.0,
+        "Dominica": 1.0,
+        "Dominican Republic": 1.0,
+        "Grenada": 1.0,
+        "Guyana": 1.0,
+        "Haiti": 1.0,
+        "Jamaica": 1.0,
+        "St Kitts and Nevis": 1.0,
+        "St Lucia": 1.0,
+        "St Vincent & the Grenadines": 1.0,
+        "Suriname": 1.0,
+        "Trinidad and Tobago": 1.0
+      }
+    },
+    {
+      "programme_area": "Viral suppression (95-3)",
+      "indicator_desc": "Proportion of people on ART with suppressed viral load.",
+      "values": {
+        "Antigua and Barbuda": 1.0,
+        "Bahamas": 1.0,
+        "Barbados": 1.0,
+        "Belize": 1.0,
+        "Cuba": 1.0,
+        "Dominica": 1.0,
+        "Dominican Republic": 1.0,
+        "Grenada": 1.0,
+        "Guyana": 1.0,
+        "Haiti": 1.0,
+        "Jamaica": 1.0,
+        "St Kitts and Nevis": 1.0,
+        "St Lucia": 1.0,
+        "St Vincent & the Grenadines": 1.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 1.0
+      }
+    },
+    {
+      "programme_area": "Community-led responses (Societal enablers)",
+      "indicator_desc": "Progress on community-led responses and enabling environment.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Key population services scale-up",
+      "indicator_desc": "Service availability and coverage for key populations.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Elimination of mother‑to‑child transmission (EMTCT)",
+      "indicator_desc": "Progress towards EMTCT validation elements.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    },
+    {
+      "programme_area": "Gender and human rights",
+      "indicator_desc": "Reduction of stigma, discrimination, and rights barriers.",
+      "values": {
+        "Antigua and Barbuda": 0.0,
+        "Bahamas": 0.0,
+        "Barbados": 0.0,
+        "Belize": 0.0,
+        "Cuba": 0.0,
+        "Dominica": 0.0,
+        "Dominican Republic": 0.0,
+        "Grenada": 0.0,
+        "Guyana": 0.0,
+        "Haiti": 0.0,
+        "Jamaica": 0.0,
+        "St Kitts and Nevis": 0.0,
+        "St Lucia": 0.0,
+        "St Vincent & the Grenadines": 0.0,
+        "Suriname": 0.0,
+        "Trinidad and Tobago": 0.0
+      }
+    }
+  ]
+}`;
+  document.getElementById('dashboard-data').textContent = RAW_JSON;
+
+  const state = {
+    data: JSON.parse(document.getElementById('dashboard-data').textContent),
+    originalData: JSON.parse(document.getElementById('dashboard-data').textContent),
+    indicatorIndex: 0,
+    countryFilter: 'All'
+  };
+
+  function hsl(h, s, l){ return `hsl(${h} ${s}% ${l}%)`; }
+
+  // Map 0..100 to red(0) -> yellow(60) -> green(120)
+  function pctToColor(p){
+    const clamped = Math.max(0, Math.min(100, p));
+    const hue = (clamped * 1.2); // 0..120
+    return hsl(hue, 70, 45);
+  }
+
+  function normalizeValue(v, indicatorRecord){
+    if(v == null || isNaN(v)) return null;
+    // Heuristics: if values are in 0..1, scale to 0..100; if up to 12, scale to months; else if up to 100, keep; else scale by max across countries
+    const values = Object.values(indicatorRecord.values).filter(x => typeof x === 'number');
+    const maxVal = Math.max(...values);
+    if(maxVal <= 1.5){ return v * 100; }
+    if(maxVal <= 12){ return (v/12)*100; }
+    if(maxVal <= 100){ return v; }
+    return (v/maxVal)*100; // relative scale
+  }
+
+  function fmt(p){ return (p == null || isNaN(p)) ? '—' : Math.round(p); }
+
+  function populateFilters(){
+    const indSel = document.getElementById('indicatorSel');
+    const cSel = document.getElementById('countrySel');
+    indSel.innerHTML = '';
+    state.data.records.forEach((rec, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx; opt.textContent = rec.indicator_desc.replace(/\s+/g,' ').trim().slice(0,160);
+      indSel.appendChild(opt);
+    });
+    indSel.value = state.indicatorIndex;
+
+    cSel.innerHTML = '';
+    const allOpt = document.createElement('option'); allOpt.value = 'All'; allOpt.textContent = 'All Caribbean'; cSel.appendChild(allOpt);
+    state.data.metadata.countries.forEach(c => {
+      const o = document.createElement('option'); o.value = c; o.textContent = `${getFlag(c)} ${c}`; cSel.appendChild(o);
+    });
+    cSel.value = state.countryFilter;
+
+    indSel.addEventListener('change', e => { state.indicatorIndex = +e.target.value; render(); });
+    cSel.addEventListener('change', e => { state.countryFilter = e.target.value; render(); });
+  }
+
+  function renderHeatmap(){
+    const wrap = document.getElementById('heatmap');
+    wrap.innerHTML = '';
+    const rec = state.data.records[state.indicatorIndex];
+    const countries = state.data.metadata.countries;
+
+    countries.forEach(c => {
+      const raw = rec.values[c];
+      const p = normalizeValue(raw, rec);
+      const cell = document.createElement('div');
+      cell.className = 'country-cell';
+      const bg = pctToColor(isNaN(p)?0:p);
+      cell.style.background = `linear-gradient(180deg, ${bg}33, #0f1e30)`; // subtle tint
+
+      const name = document.createElement('div'); name.className = 'country-name'; name.textContent = `${getFlag(c)} ${c}`;
+      const val = document.createElement('div'); val.className = 'country-value'; val.textContent = isNaN(p) ? '—' : `${fmt(p)}%`;
+      const chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = rec.programme_area.replace(/\s+/g,' ').trim().slice(0,60);
+
+      cell.appendChild(name); cell.appendChild(val); cell.appendChild(chip);
+      wrap.appendChild(cell);
+    });
+  }
+
+  function renderCountryDeep(){
+    const host = document.getElementById('countryDeep');
+    host.innerHTML = '';
+    if(state.countryFilter === 'All') return;
+
+    const title = document.createElement('h3'); title.textContent = `Country view — ${state.countryFilter}`;
+    host.appendChild(title);
+
+    const list = document.createElement('div'); list.className = 'grid'; host.appendChild(list);
+
+    state.data.records.forEach((rec) => {
+      const raw = rec.values[state.countryFilter];
+      const p = normalizeValue(raw, rec);
+      const card = document.createElement('div'); card.className = 'card';
+      const name = document.createElement('div'); name.className = 'tiny'; name.textContent = rec.programme_area.replace(/\s+/g,' ').trim();
+      const desc = document.createElement('div'); desc.textContent = rec.indicator_desc.replace(/\s+/g,' ').trim().slice(0,160);
+      const bar = document.createElement('div'); bar.className = 'bar';
+      const fill = document.createElement('span'); fill.style.width = (isNaN(p)?0:p) + '%'; fill.style.background = pctToColor(isNaN(p)?0:p);
+      bar.appendChild(fill);
+      const pct = document.createElement('div'); pct.className = 'tiny'; pct.style.textAlign = 'right'; pct.textContent = isNaN(p)? '—' : `${fmt(p)}%`;
+
+      card.appendChild(name); card.appendChild(desc); card.appendChild(bar); card.appendChild(pct);
+      list.appendChild(card);
+    });
+  }
+
+  function render(){
+    renderHeatmap();
+    renderCountryDeep();
+  }
+
+  // File upload (CSV/.xlsx)
+  function parseCSV(text){
+    const rows = [];
+    let i=0, field='', row=[], inQuotes=false;
+    while(i < text.length){
+      const ch = text[i];
+      if(inQuotes){
+        if(ch === '"' && text[i+1] === '"'){ field += '"'; i+=2; continue; }
+        if(ch === '"'){ inQuotes = false; i++; continue; }
+        field += ch; i++; continue;
+      } else {
+        if(ch === '"'){ inQuotes = true; i++; continue; }
+        if(ch === ','){ row.push(field); field=''; i++; continue; }
+        if(ch === '
+' || ch === '
+'){ if(field !== '' || row.length>0){ row.push(field); rows.push(row); row=[]; field=''; } i++; if(ch==='
+' && text[i]==='
+') i++; continue; }
+        field += ch; i++; continue;
+      }
+    }
+    if(field!=='' || row.length>0){ row.push(field); rows.push(row); }
+    return rows.filter(r=>r.some(c=>c!==''));
+  }
+  function rowsToData(rows){
+    if(!rows.length) return null;
+    const header = rows[0];
+    const programmeIdx = 0, indicatorIdx = 1;
+    const countryCols = header.slice(2).map(h=>h.trim()).filter(Boolean);
+    const records = rows.slice(1).map(r=>{
+      const values = {};
+      countryCols.forEach((c, idx)=>{
+        const v = r[2+idx];
+        const num = v===''||v==null ? null : Number(v);
+        values[c] = (Number.isFinite(num)? num : null);
+      });
+      return { programme_area: r[programmeIdx]||'', indicator_desc: r[indicatorIdx]||'', values };
+    });
+    return { metadata: { countries: countryCols, sheet: 'Uploaded CSV' }, records };
+  }
+  function handleUpload(file){
+    const ext = file.name.toLowerCase().split('.').pop();
+    if(ext === 'xlsx'){
+      alert('Excel (.xlsx) parsing requires an external library. Please export your sheet as CSV and upload the CSV here.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result; const rows = parseCSV(text);
+      const parsed = rowsToData(rows);
+      if(parsed && parsed.records && parsed.records.length){
+        state.data = parsed; state.countryFilter = 'All'; state.indicatorIndex = 0; populateFilters(); render();
+      } else {
+        alert('Could not parse CSV. Expect columns: programme_area, indicator_desc, then one column per country.');
+      }
+    };
+    reader.readAsText(file);
+  }
+  function toCSV(rows){
+    return rows.map(r=>r.map(v=>{
+      const s = (v==null?'' : String(v));
+      return /[",
+
+]/.test(s) ? '"'+s.replaceAll('"','""')+'"' : s;
+    }).join(',')).join('
+');
+  }
+  function exportIndicatorCSV(){
+    const rec = state.data.records[state.indicatorIndex];
+    const header = ['programme_area','indicator_desc',...state.data.metadata.countries];
+    const row = [rec.programme_area, rec.indicator_desc, ...state.data.metadata.countries.map(c=>{
+      const p = normalizeValue(rec.values[c], rec); return Number.isFinite(p)? Math.round(p) : '';
+    })];
+    const csv = toCSV([header, row]);
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'caribbean_indicator_heatmap.csv' });
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  function exportAllCSV(){
+    const header = ['programme_area','indicator_desc','country','value'];
+    const rows = [header];
+    state.data.records.forEach(rec=>{
+      state.data.metadata.countries.forEach(c=>{
+        rows.push([rec.programme_area, rec.indicator_desc, c, rec.values[c]]);
+      })
+    });
+    const csv = toCSV(rows);
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'caribbean_hiv_dashboard_raw.csv' });
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  function downloadJSON(){
+    const blob = new Blob([JSON.stringify(state.data, null, 2)], {type:'application/json'});
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'caribbean_hiv_dashboard.json' });
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  function printPDF(){ window.print(); }
+  function resetData(){ state.data = JSON.parse(JSON.stringify(state.originalData)); state.countryFilter = 'All'; state.indicatorIndex = 0; populateFilters(); render(); }
+
+  // Init
+  (function(){
+    document.getElementById('year').textContent = new Date().getFullYear();
+    populateFilters();
+    render();
+
+    // Wire toolbar actions
+    const up = document.getElementById('uploadFile'); if(up){ up.addEventListener('change', (e)=>{ if(e.target.files && e.target.files[0]) handleUpload(e.target.files[0]); }); }
+    const b1 = document.getElementById('btnExportIndicator'); if(b1) b1.addEventListener('click', exportIndicatorCSV);
+    const b2 = document.getElementById('btnExportAll'); if(b2) b2.addEventListener('click', exportAllCSV);
+    const b3 = document.getElementById('btnDownloadJSON'); if(b3) b3.addEventListener('click', downloadJSON);
+    const b4 = document.getElementById('btnPrint'); if(b4) b4.addEventListener('click', printPDF);
+    const b5 = document.getElementById('btnResetData'); if(b5) b5.addEventListener('click', resetData);
+  })();
+  </script>
+
+  <script>
+    // Inject JSON string prepared server-side
+    (function(){
+      const placeholder = 'REPLACED_JSON_PLACEHOLDER';
+      document.body.innerHTML = document.body.innerHTML.replaceAll(placeholder, JSON.stringify(JSON.parse(document.getElementById('dashboard-data').textContent)));
+    })();
+  </script>
+
+  <!--
+    Implementation notes
+    - No external frameworks. Pure HTML/CSS/JS.
+    - Values normalized via heuristic for cross-indicator comparability.
+    - Green→yellow→red gradient communicates relative achievement.
+    - Smooth layout that prints cleanly (File → Print) for quick briefings.
+  -->
+</body>
+</html>

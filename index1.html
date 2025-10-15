@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive HIV KPI Grid</title>
+    <style>
+        /* Basic Styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        /* Container for the tool */
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #4a4a4a;
+            margin-bottom: 25px;
+        }
+
+        /* Dropdown menu styling */
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Styling for the results display */
+        .result-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        /* The colored box indicating performance */
+        #performance-indicator {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Styling for the KPI value text */
+        #kpi-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        
+        /* Color classes for performance */
+        .high-performance { background-color: #28a745; } /* Green */
+        .medium-performance { background-color: #ffc107; } /* Orange */
+        .low-performance { background-color: #dc3545; } /* Red */
+        .no-data { background-color: #6c757d; } /* Grey */
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>HIV Performance Dashboard 📊</h1>
+        
+        <select id="kpi-selector">
+            <option value="">-- Select a KPI --</option>
+            <option value="kpi1">Percentage of people living with HIV who know their status (KPI 1)</option>
+            <option value="kpi2">Percentage of people with diagnosed HIV who are on treatment (KPI 2)</option>
+            <option value="kpi3">Percentage of people on treatment with suppressed viral loads (KPI 3)</option>
+        </select>
+        
+        <div class="result-container">
+            <div id="performance-indicator" class="no-data"></div>
+            <div id="kpi-value">N/A</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA AND THRESHOLDS ---
+        // This object holds the data for each KPI.
+        // You can easily update the 'value' for each KPI here.
+        const kpiData = {
+            "kpi1": { 
+                value: 95, 
+                thresholds: { high: 90, medium: 80 } 
+            },
+            "kpi2": { 
+                value: 86, 
+                thresholds: { high: 90, medium: 80 } 
+            },
+            "kpi3": { 
+                value: 78, 
+                thresholds: { high: 90, medium: 80 } 
+            },
+        };
+
+        // --- 2. GETTING HTML ELEMENTS ---
+        const selector = document.getElementById('kpi-selector');
+        const valueDisplay = document.getElementById('kpi-value');
+        const indicatorBox = document.getElementById('performance-indicator');
+
+        // --- 3. EVENT LISTENER ---
+        // This function runs every time the user selects a new option from the dropdown.
+        selector.addEventListener('change', function() {
+            const selectedKpi = this.value;
+            updateDashboard(selectedKpi);
+        });
+
+        // --- 4. UPDATE FUNCTION ---
+        // This function updates the value and the color on the dashboard.
+        function updateDashboard(kpiKey) {
+            // If the user selects the default option ("-- Select a KPI --")
+            if (!kpiKey) {
+                valueDisplay.textContent = 'N/A';
+                indicatorBox.className = 'no-data';
+                return;
+            }
+
+            const data = kpiData[kpiKey];
+            const value = data.value;
+            const thresholds = data.thresholds;
+            let performanceClass = 'no-data'; // Default class
+
+            // Determine the performance level and assign a color class
+            if (value >= thresholds.high) {
+                performanceClass = 'high-performance'; // Green
+            } else if (value >= thresholds.medium) {
+                performanceClass = 'medium-performance'; // Orange
+            } else {
+                performanceClass = 'low-performance'; // Red
+            }
+            
+            // Update the display with the new information
+            valueDisplay.textContent = value + '%';
+            indicatorBox.className = performanceClass;
+        }
+    </script>
+
+</body>
+</html>

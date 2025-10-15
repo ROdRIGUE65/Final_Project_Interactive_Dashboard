@@ -3,157 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive HIV KPI Grid</title>
+    <title>Interactive HIV Performance Grid</title>
     <style>
-        /* Basic Styling for the page */
+        /* General Styling */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #333;
+            min-height: 100vh;
         }
 
-        /* Container for the tool */
         .container {
-            background-color: white;
-            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+            background-color: #ffffff;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 600px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
         }
 
-        h1 {
-            color: #4a4a4a;
+        header h1 {
+            color: #005a9c;
+            text-align: center;
+            margin-top: 0;
             margin-bottom: 25px;
         }
 
-        /* Dropdown menu styling */
-        select {
+        /* Controls for Dropdowns */
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .control-group select {
             width: 100%;
             padding: 12px;
-            margin-bottom: 25px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
+            background-color: #fff;
             cursor: pointer;
         }
 
-        /* Styling for the results display */
-        .result-container {
+        /* Result Card Styling */
+        #result-card {
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            min-height: 200px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            gap: 20px;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        /* The colored box indicating performance */
-        #performance-indicator {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-            transition: background-color 0.3s ease;
+        #kpi-name {
+            font-size: 1.1em;
+            font-weight: 500;
+            margin-bottom: 15px;
         }
 
-        /* Styling for the KPI value text */
         #kpi-value {
-            font-size: 36px;
+            font-size: 4em;
             font-weight: bold;
+            line-height: 1;
+        }
+
+        #country-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
         
-        /* Color classes for performance */
-        .high-performance { background-color: #28a745; } /* Green */
-        .medium-performance { background-color: #ffc107; } /* Orange */
-        .low-performance { background-color: #dc3545; } /* Red */
-        .no-data { background-color: #6c757d; } /* Grey */
+        /* Color Code Classes */
+        .high-performance {
+            background-color: #d4edda; /* Green */
+            color: #155724;
+        }
+        .medium-performance {
+            background-color: #fff3cd; /* Orange/Yellow */
+            color: #856404;
+        }
+        .low-performance {
+            background-color: #f8d7da; /* Red */
+            color: #721c24;
+        }
+        .no-data {
+            background-color: #e2e3e5; /* Grey */
+            color: #383d41;
+        }
 
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>HIV Performance Dashboard 📊</h1>
+        <header>
+            <h1>HIV Program Performance Dashboard</h1>
+        </header>
         
-        <select id="kpi-selector">
-            <option value="">-- Select a KPI --</option>
-            <option value="kpi1">Percentage of people living with HIV who know their status (KPI 1)</option>
-            <option value="kpi2">Percentage of people with diagnosed HIV who are on treatment (KPI 2)</option>
-            <option value="kpi3">Percentage of people on treatment with suppressed viral loads (KPI 3)</option>
-        </select>
-        
-        <div class="result-container">
-            <div id="performance-indicator" class="no-data"></div>
-            <div id="kpi-value">N/A</div>
-        </div>
+        <main>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="country-select">Select a Country:</label>
+                    <select id="country-select"></select>
+                </div>
+                <div class="control-group">
+                    <label for="kpi-select">Select a Key Performance Indicator:</label>
+                    <select id="kpi-select"></select>
+                </div>
+            </div>
+
+            <div id="result-card" class="no-data">
+                <div id="country-name">Select a country</div>
+                <div id="kpi-name">and a KPI to see the result</div>
+                <div id="kpi-value">--</div>
+            </div>
+        </main>
     </div>
 
     <script>
-        // --- 1. DATA AND THRESHOLDS ---
-        // This object holds the data for each KPI.
-        // You can easily update the 'value' for each KPI here.
-        const kpiData = {
-            "kpi1": { 
-                value: 95, 
-                thresholds: { high: 90, medium: 80 } 
-            },
-            "kpi2": { 
-                value: 86, 
-                thresholds: { high: 90, medium: 80 } 
-            },
-            "kpi3": { 
-                value: 78, 
-                thresholds: { high: 90, medium: 80 } 
-            },
-        };
-
-        // --- 2. GETTING HTML ELEMENTS ---
-        const selector = document.getElementById('kpi-selector');
-        const valueDisplay = document.getElementById('kpi-value');
-        const indicatorBox = document.getElementById('performance-indicator');
-
-        // --- 3. EVENT LISTENER ---
-        // This function runs every time the user selects a new option from the dropdown.
-        selector.addEventListener('change', function() {
-            const selectedKpi = this.value;
-            updateDashboard(selectedKpi);
-        });
-
-        // --- 4. UPDATE FUNCTION ---
-        // This function updates the value and the color on the dashboard.
-        function updateDashboard(kpiKey) {
-            // If the user selects the default option ("-- Select a KPI --")
-            if (!kpiKey) {
-                valueDisplay.textContent = 'N/A';
-                indicatorBox.className = 'no-data';
-                return;
-            }
-
-            const data = kpiData[kpiKey];
-            const value = data.value;
-            const thresholds = data.thresholds;
-            let performanceClass = 'no-data'; // Default class
-
-            // Determine the performance level and assign a color class
-            if (value >= thresholds.high) {
-                performanceClass = 'high-performance'; // Green
-            } else if (value >= thresholds.medium) {
-                performanceClass = 'medium-performance'; // Orange
-            } else {
-                performanceClass = 'low-performance'; // Red
-            }
+        document.addEventListener('DOMContentLoaded', function() {
             
-            // Update the display with the new information
-            valueDisplay.textContent = value + '%';
-            indicatorBox.className = performanceClass;
-        }
+            // --- DATA SOURCE ---
+            // This is where you would put your data, likely from an Excel export.
+            // Using `null` for "no data".
+            const kpiData = {
+    "Antigua and Barbuda": { "kpi1": null, "kpi2": null, "kpi3": null },
+    "Bahamas": { "kpi1": 0, "kpi2": 0, "kpi3": 90 },
+    "Barbados": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Belize": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Cuba": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Dominica": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Dominican Republic": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Grenada": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Guyana": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Haiti": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Jamaica": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "St Kitts and Nevis": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "St Lucia": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "St Vincent & the Grenadines": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Suriname": { "kpi1": 0, "kpi2": 0, "kpi3": 0 },
+    "Trinidad and Tobago": { "kpi1": 0, "kpi2": 0, "kpi3": 0 }
+};
+
+            const kpiDetails = {
+                "kpi1": "Percentage of people living with HIV who know their HIV status (KPI 1)",
+                "kpi2": "Percentage of people living with HIV who know their HIV status and are accessing treatment (KPI 2)",
+                "kpi3": "Percentage of people living with HIV on treatment who have suppressed viral loads (KPI 3)"
+            };
+
+            // --- GET HTML ELEMENTS ---
+            const countrySelect = document.getElementById('country-select');
+            const kpiSelect = document.getElementById('kpi-select');
+            const resultCard = document.getElementById('result-card');
+            const countryNameDisplay = document.getElementById('country-name');
+            const kpiNameDisplay = document.getElementById('kpi-name');
+            const kpiValueDisplay = document.getElementById('kpi-value');
+
+            // --- POPULATE DROPDOWNS DYNAMICALLY ---
+            function populateDropdowns() {
+                // Populate countries
+                const countries = Object.keys(kpiData).sort();
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.textContent = country;
+                    countrySelect.appendChild(option);
+                });
+
+                // Populate KPIs
+                const kpis = Object.keys(kpiDetails);
+                kpis.forEach(kpiKey => {
+                    const option = document.createElement('option');
+                    option.value = kpiKey;
+                    option.textContent = `KPI ${kpiKey.slice(-1)}`; // e.g., "KPI 1"
+                    kpiSelect.appendChild(option);
+                });
+            }
+
+            // --- MAIN UPDATE FUNCTION ---
+            function updateDisplay() {
+                const selectedCountry = countrySelect.value;
+                const selectedKpi = kpiSelect.value;
+
+                // Look up the value from our data
+                const value = kpiData[selectedCountry] ? kpiData[selectedCountry][selectedKpi] : null;
+
+                // Update text content
+                countryNameDisplay.textContent = selectedCountry;
+                kpiNameDisplay.textContent = kpiDetails[selectedKpi];
+                
+                // Clear existing color classes
+                resultCard.className = '';
+
+                // Determine performance and apply class and value
+                if (value === null || value === undefined) {
+                    kpiValueDisplay.textContent = 'N/A';
+                    resultCard.classList.add('no-data');
+                } else {
+                    kpiValueDisplay.textContent = `${value}%`;
+                    if (value >= 95) {
+                        resultCard.classList.add('high-performance');
+                    } else if (value >= 85) {
+                        resultCard.classList.add('medium-performance');
+                    } else {
+                        resultCard.classList.add('low-performance');
+                    }
+                }
+            }
+
+            // --- INITIALIZE THE PAGE ---
+            populateDropdowns();
+            
+            // Add event listeners to update the display when a selection changes
+            countrySelect.addEventListener('change', updateDisplay);
+            kpiSelect.addEventListener('change', updateDisplay);
+
+            // Initial call to set the default view
+            updateDisplay();
+        });
     </script>
 
 </body>

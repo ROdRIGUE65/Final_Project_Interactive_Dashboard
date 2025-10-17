@@ -1,843 +1,1104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Interactive Regional Caribbean HIV Dashboard • Rodrigue Nze Eyo’o</title>
-  <meta name="description" content="One‑page portfolio showcasing an interactive regional Caribbean HIV dashboard with country & indicator filters, built for UNAIDS / PANCAP collaboration." />
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Caribbean HIV KPI Dashboard — Americas GeoJSON</title>
+
+  <!-- Styles -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/choices.js/public/assets/styles/choices.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/nouislider@15.7.1/dist/nouislider.min.css"
+  />
+
   <style>
-    :root{
-      /* Gabon-inspired palette blended with Caribbean hues */
-      --bg: #0a1320;                 /* deep midnight blue */
-      --bg-accent: radial-gradient(1200px 800px at 20% -10%, #0d2b4a 0%, transparent 60%),
-                   radial-gradient(900px 700px at 110% 20%, #0f4c3a 0%, transparent 60%),
-                   radial-gradient(700px 500px at 40% 120%, #2a7a2e 0%, transparent 60%);
-      --panel: rgba(255,255,255,0.08);
-      --panel-2: rgba(255,255,255,0.06);
-      --text: #eaf2fb;
-      --muted: #a8bfd6;
-      --primary: #2fbf71;           /* green */
-      --accent: #ffcc00;            /* yellow */
-      --danger: #e44141;            /* red */
-      --shadow: 0 10px 30px rgba(0,0,0,0.35);
-      --radius: 20px;
-      --radius-xl: 28px;
+    :root {
+      --primary-color: #005a9c;
+      --secondary-color: #009fda;
+      --accent-color: #fdb913;
+      --bg-color: #f4f7f9;
+      --surface-color: #ffffff;
+      --text-color: #333;
+      --text-muted-color: #666;
+      --border-color: #dee2e6;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --border-radius: 8px;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+      --green: #1a9641;
+      --orange: #fdae61;
+      --red: #d7191c;
+      --grey: #bdbdbd;
     }
-    html, body{ height:100%; }
-    body{
-      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-      background: var(--bg); color: var(--text); line-height:1.5;
-      background-image: var(--bg-accent);
-      background-attachment: fixed; background-repeat: no-repeat; background-size: cover;
+    * { box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.6;
     }
-    a{ color: #8fd8ff; text-decoration: none; }
-    a:hover{ text-decoration: underline; }
-    .wrapper{ max-width: 1200px; margin: 0 auto; padding: 24px; }
-    header.hero{ padding: 72px 0 32px; position: relative; }
-    .glass{ background: var(--panel); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px); box-shadow: var(--shadow); border-radius: var(--radius-xl); }
-    .hero-card{ display:grid; grid-template-columns: 120px 1fr; gap: 24px; padding: 24px; align-items:center; }
-    .avatar{ width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0)); border: 2px solid rgba(255,255,255,0.2); }
-    h1{ font-size: clamp(28px, 4vw, 48px); margin: 0 0 8px; letter-spacing: 0.3px; }
-    .subtitle{ font-size: 18px; color: var(--muted); margin-bottom: 6px; }
-    .badge{ display:inline-block; padding: 6px 10px; border-radius: 999px; background: linear-gradient(90deg, rgba(47,191,113,0.25), rgba(255,204,0,0.25)); border:1px solid rgba(255,255,255,0.15); font-size: 12px; }
-    nav.scroller{ display:flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
-    nav.scroller a{ display:inline-block; padding: 10px 14px; border-radius: 999px; background: var(--panel-2); border:1px solid rgba(255,255,255,0.12); }
 
-    section{ margin: 36px 0; }
-    section .section-title{ font-size: 22px; margin: 0 0 14px; letter-spacing: 0.4px; }
-    .grid{ display:grid; gap: 16px; }
-    @media (min-width: 900px){ .grid.cols-2{ grid-template-columns: 1fr 1fr; } }
+    /* Header / Nav */
+    .app-header {
+      background: var(--surface-color);
+      padding: 0 2rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .site-title {
+      color: var(--primary-color);
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-block;
+      padding: 1rem 0;
+      font-size: 1.25rem;
+    }
+    .app-nav ul {
+      display: flex;
+      gap: 0.4rem;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    .app-nav a {
+      display: block;
+      padding: 1.25rem 1rem;
+      color: var(--text-muted-color);
+      text-decoration: none;
+      border-bottom: 3px solid transparent;
+      font-weight: 600;
+    }
+    .app-nav a.active,
+    .app-nav a:hover {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
 
-    .card{ padding: 18px; border-radius: var(--radius); background: var(--panel); border: 1px solid rgba(255,255,255,0.08); box-shadow: var(--shadow); }
+    /* Layout */
+    .app-main {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 2rem;
+      padding: 2rem;
+    }
+    .app-filters {
+      background: var(--surface-color);
+      border-radius: var(--border-radius);
+      padding: 1.25rem;
+      align-self: start;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-group {
+      margin-bottom: 1.25rem;
+    }
+    .filter-group label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .filter-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
 
-    /* Dashboard */
-    .filters{ display:grid; gap: 12px; grid-template-columns: 1fr; }
-    @media (min-width: 800px){ .filters{ grid-template-columns: 2fr 1fr; align-items: end; } }
-    label{ font-size: 13px; color: var(--muted); display:block; margin-bottom: 6px; }
-    select{ width: 100%; padding: 10px 12px; border-radius: 12px; background: #0e1a2b; color: var(--text); border:1px solid rgba(255,255,255,0.18); }
+    .content-wrapper {
+      min-width: 0;
+    }
 
-    .heatmap{ display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
-    .country-cell{ border-radius: 14px; padding: 14px; background: #0f1e30; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; }
-    .country-name{ font-size: 14px; color:#d2e4f7; }
-    .country-value{ font-size: 28px; font-weight: 700; margin-top: 4px; }
-    .chip{ font-size: 12px; padding: 3px 8px; border-radius: 999px; border:1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.25); }
+    /* Views */
+    .view {
+      display: none;
+    }
+    .view.active {
+      display: block;
+    }
 
-    .legend{ display:flex; align-items:center; gap: 10px; margin-top: 8px; }
-    .gradient-bar{ height: 12px; flex:1; border-radius: 999px; background: linear-gradient(90deg, var(--danger), var(--accent), var(--primary)); border:1px solid rgba(255,255,255,0.15); }
+    /* Cards, buttons, etc */
+    .card {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      padding: 1rem;
+    }
+    .button {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .button-secondary {
+      background: var(--text-muted-color);
+    }
 
-    /* Country deep-dive */
-    .country-deep{ margin-top: 20px; }
-    .bar{ height: 28px; border-radius: 999px; background: #0f1e30; border:1px solid rgba(255,255,255,0.1); overflow:hidden; position: relative; }
-    .bar > span{ display:block; height: 100%; }
+    .summary-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .summary-card .card-title {
+      color: var(--text-muted-color);
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+    .summary-card .card-value {
+      color: var(--primary-color);
+      font-weight: 800;
+      font-size: 1.75rem;
+    }
 
-    footer{ margin: 56px 0 24px; text-align:center; color: var(--muted); font-size: 13px; }
-    .tiny{ font-size: 12px; color: var(--muted); }
-    .muted{ color: var(--muted); }
-    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .notice{ font-size:13px; color: var(--muted); margin-top: 4px; }
+    /* Charts */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    #charts-container { position: relative; overflow: hidden; }
+    .chart-tooltip {
+      position: absolute;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 30;
+    }
+
+    /* Map */
+    #map { min-height: 520px; background: #ddeaf5; border-radius: 8px; }
+    .map-legend {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      line-height: 1.4;
+      box-shadow: var(--shadow-sm);
+    }
+    .legend-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* Scorecards */
+    #scorecard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .scorecard {
+      padding: 0;
+      border: 4px solid var(--grey);
+      text-align: center;
+    }
+    .status-good { border-color: var(--green); }
+    .status-medium { border-color: var(--orange); }
+    .status-insufficient { border-color: var(--red); }
+    .scorecard-badge {
+      display: inline-block;
+      padding: 0.2rem 0.8rem;
+      border-radius: 14px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+    .badge-good { background: var(--green); }
+    .badge-medium { background: var(--orange); }
+    .badge-insufficient { background: var(--red); }
+    .badge-no_data { background: var(--grey); }
+    .scorecard-value {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin: 0.6rem 0 0.2rem;
+    }
+
+    /* Footer */
+    .app-footer {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-muted-color);
+      border-top: 1px solid var(--border-color);
+    }
+
+    @media (max-width: 992px) {
+      .app-main {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <header class="hero">
-      <div class="hero-card glass">
-        <div class="avatar" aria-hidden="true"></div>
-        <div>
-          <span class="badge">Portfolio • Data for Impact</span>
-          <h1>Interactive Regional Caribbean HIV Dashboard</h1>
-          <div class="subtitle">by Rodrigue Nze Eyo’o — Physician‑epidemiologist & Senior Strategic Information Adviser</div>
-          <nav class="scroller">
-            <a href="#about">About me</a>
-            <a href="#overview">Dashboard overview</a>
-            <a href="#dashboard">Interactive dashboard</a>
-            <a href="#partners">Partners</a>
-          </nav>
-        </div>
-      </div>
+  <div id="app-container">
+    <header class="app-header">
+      <a href="#overview" class="site-title">Caribbean HIV KPI Dashboard</a>
+      <nav class="app-nav">
+        <ul>
+          <li><a href="#overview" class="active">Overview</a></li>
+          <li><a href="#charts">Charts</a></li>
+          <li><a href="#map">Map</a></li>
+          <li><a href="#scorecard">Scorecard</a></li>
+          <li><a href="#about">About</a></li>
+        </ul>
+      </nav>
     </header>
 
-    <section id="about">
-      <div class="grid cols-2">
-        <div class="card">
-          <h2 class="section-title">About me</h2>
-          <p>
-            Senior Strategic Information Adviser with 16+ years leading HIV Strategic Information & M&E across Africa and the Caribbean.
-            I turn surveillance, routine programme, survey and financial data into decisions, workplans and course‑corrections that improve
-            retention and viral load suppression. I convene regional knowledge‑exchange platforms and support Ministries of Health and
-            partners (PEPFAR/CDC, Global Fund, PAHO/WHO, CARPHA, PANCAP, civil society) to institutionalize data‑to‑action cycles.
-            Bilingual (English/French); experienced with Spectrum/Naomi/Goals, routine HIS strengthening and executive dashboards.
-          </p>
-          <p class="notice">Note: Contact details intentionally omitted here to reduce spam.</p>
+    <main class="app-main">
+      <!-- Filters -->
+      <aside class="app-filters">
+        <div class="filter-group">
+          <label for="indicator-select">Indicator</label>
+          <select id="indicator-select"></select>
         </div>
-        <div class="card">
-          <h2 class="section-title">Dashboard overview</h2>
+        <div class="filter-group">
+          <label for="country-select">Countries</label>
+          <select id="country-select" multiple></select>
+        </div>
+        <div class="filter-group">
+          <label>Year Range</label>
+          <div id="year-slider"></div>
+          <div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap">
+            <button class="button" id="btn-last5" type="button">Last 5</button>
+            <button class="button" id="btn-last10" type="button">Last 10</button>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button id="share-link-btn" class="button" type="button">Copy Share Link</button>
+          <button id="reset-filters-btn" class="button button-secondary" type="button">Reset Filters</button>
+          <div id="upload-status" style="font-size:.9em;color:#666"></div>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <div class="content-wrapper">
+        <div id="overview-view" class="view active">
+          <h1>Welcome to the Caribbean HIV KPI Dashboard (Americas GeoJSON)</h1>
+          <p>This version loads your North/South America + Caribbean GeoJSON and applies non-percent scoring thresholds & rounding up for all displayed values.</p>
+          <div class="summary-cards-grid">
+            <div class="card summary-card" id="summary-indicator">
+              <div class="card-title">Selected Indicator</div>
+              <div class="card-value">--</div>
+            </div>
+            <div class="card summary-card" id="summary-countries">
+              <div class="card-title">Selected Countries</div>
+              <div class="card-value">0</div>
+            </div>
+            <div class="card summary-card" id="summary-years">
+              <div class="card-title">Year Range</div>
+              <div class="card-value">--</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="charts-view" class="view">
+          <div class="page-header">
+            <h1>Indicator Trends</h1>
+            <div style="display:flex;gap:.5rem">
+              <button id="export-png-btn" class="button" type="button">Download PNG</button>
+              <button id="export-svg-btn" class="button" type="button">Download SVG</button>
+            </div>
+          </div>
+          <div id="charts-container" class="card">
+            <div id="charts-placeholder">Select an indicator and at least one country to view trends.</div>
+            <div id="tooltip" class="chart-tooltip"></div>
+          </div>
+        </div>
+
+        <div id="map-view" class="view">
+          <div id="map"></div>
+          <div class="card" style="margin-top:1rem;display:flex;gap:1rem;align-items:center">
+            <label for="time-slider" id="time-slider-label">Year:</label>
+            <input type="range" id="time-slider" min="2010" max="2025" step="1" value="2020" />
+            <button id="play-pause-btn" class="button" type="button" aria-label="Play animation">▶</button>
+            <div id="map-legend" style="margin-left:auto"></div>
+          </div>
+        </div>
+
+        <div id="scorecard-view" class="view">
+          <h1>Country Performance Scorecards</h1>
           <p>
-            This one‑page site showcases an interactive Caribbean HIV dashboard prototype based on a regional KPI grid. Use the filters to
-            explore indicators and country performance. The heatmap uses a green→yellow→red gradient to reflect relative achievement levels.
-            Selecting a specific country reveals a concise, across‑indicator view.
+            Non-percent indicators:
+            <strong>&lt; 200 = Insufficient</strong>,
+            <strong>200–500 = Medium</strong>,
+            <strong>&gt; 500 = Good</strong>.
+            Percent indicators use your configured percent rules.
+            All displayed values are rounded <strong>up</strong>.
           </p>
-          <ul class="tiny">
-            <li>Data source: Regional KPI grid (Excel), parsed into JSON for this demo.</li>
-            <li>Design goals: fast, lightweight, no frameworks; elegant visuals; export‑ready views.</li>
+          <div id="scorecard-grid"></div>
+        </div>
+
+        <div id="about-view" class="view">
+          <h1>About</h1>
+          <ul>
+            <li>Loads your <code>custom.geo.json</code> (Americas incl. Caribbean).</li>
+            <li>Non-percent thresholds & rounding up applied everywhere.</li>
           </ul>
         </div>
       </div>
-    </section>
+    </main>
 
-    <section id="dashboard">
-      <div class="card">
-        <h2 class="section-title">Interactive dashboard</h2>
-        <div class="filters">
-          <div>
-            <label for="indicatorSel">Filter by indicator</label>
-            <select id="indicatorSel"></select>
-          </div>
-          <div>
-            <label for="countrySel">Filter by country</label>
-            <select id="countrySel"></select>
-          </div>
-        </div>
-
-        <div class="legend">
-          <span class="tiny">Low</span>
-          <div class="gradient-bar" aria-hidden="true"></div>
-          <span class="tiny">High</span>
-        </div>
-
-        <div id="heatmap" class="heatmap" aria-live="polite"></div>
-
-        <div id="countryDeep" class="country-deep"></div>
-      </div>
-    </section>
-
-    <section id="partners">
-      <div class="card">
-        <h2 class="section-title">Partners</h2>
-        <div class="grid cols-2">
-          <div class="card">
-            <h3>UNAIDS</h3>
-            <p class="muted">The Joint United Nations Programme on HIV/AIDS. Provides leadership, coordination, advocacy and data towards ending AIDS as a public health threat by 2030.</p>
-          </div>
-          <div class="card">
-            <h3>PANCAP</h3>
-            <p class="muted">Pan Caribbean Partnership Against HIV/AIDS — a multi‑sectoral regional partnership hosted by CARICOM, coordinating a unified response and knowledge‑sharing.</p>
-          </div>
-          <div class="card">
-            <h3>UNAIDS Multicountry Office for the Caribbean</h3>
-            <p class="muted">Regional hub supporting governments and communities with strategic direction, data, and technical assistance to accelerate 95‑95‑95 and rights‑based approaches.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      <div>© <span id="year"></span> Rodrigue Nze Eyo’o • Portfolio — Interactive Caribbean HIV Dashboard</div>
-      <div class="tiny">Prototype for demonstration and stakeholder conversations. Values are normalized for comparative visualization.</div>
-    </footer>
+    <footer class="app-footer">&copy; 2025 Caribbean HIV KPI Dashboard.</footer>
   </div>
 
-  <!-- Embedded data (generated from the Excel KPI grid) -->
-  <script id="dashboard-data" type="application/json"></script>
+  <!-- Libs -->
+  <script src="https://d3js.org/d3.v7.min.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="https://unpkg.com/choices.js/public/assets/scripts/choices.min.js" defer></script>
+  <script src="https://unpkg.com/nouislider@15.7.1/dist/nouislider.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
+  <!-- App -->
   <script>
-  // === Inject pre-parsed JSON (embedded below from server-side) ===
-  const RAW_JSON = `{
-  "metadata": {
-    "countries": [
-      "Antigua and Barbuda",
-      "Bahamas",
-      "Barbados",
-      "Belize",
-      "Cuba",
-      "Dominica",
-      "Dominican Republic",
-      "Grenada",
-      "Guyana",
-      "Haiti",
-      "Jamaica",
-      "St Kitts and Nevis",
-      "St Lucia",
-      "St Vincent & the Grenadines",
-      "Suriname",
-      "Trinidad and Tobago"
-    ],
-    "sheet": "KPIs Countries"
-  },
-  "records": [
-    {
-      "programme_area": "PrEP among Eligible Populations: HIV Program essentials-Prevention (KPI 0)",
-      "indicator_desc": "Coverage Rate of PrEP among Eligible Po... transgender people, sex workers, and serodiscordant couples. ",
-      "values": {
-        "Antigua and Barbuda": 0.8,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "HIV Testing-People living with HIV who know their status (KPI 1)",
-      "indicator_desc": "Percentage of people living with HIV who know their status.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Community-Based HIV Testing Services (KPI 1.1)",
-      "indicator_desc": "Percentage of HIV tests done at the community level.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.19,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Opt-Out Testing in Healthcare Settings (KPI 1.2)",
-      "indicator_desc": "Percentage of facilities implementing opt-out HIV testing.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Self-Testing Promotion (KPI 1.3)",
-      "indicator_desc": "Availability and promotion of HIV self-testing.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "MSM-Focused Testing Programs (KPI 1.4)",
-      "indicator_desc": "Coverage of testing services for men who have sex with men.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "FSW-Focused Testing Programs (KPI 1.5)",
-      "indicator_desc": "Coverage of testing services for female sex workers.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "TG-Focused Testing Programs (KPI 1.6)",
-      "indicator_desc": "Coverage of testing services for transgender individuals.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "People living with HIV who know their HIV status (95-1)",
-      "indicator_desc": "Proportion of PLHIV who know their status.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Immediate Treatment Initiation -Treat-All Approach (KPI 2.1)",
-      "indicator_desc": "Number of months in the year with immediate ART initiation (treat‑all).",
-      "values": {
-        "Antigua and Barbuda": 12.0,
-        "Bahamas": 12.0,
-        "Barbados": 12.0,
-        "Belize": 12.0,
-        "Cuba": 12.0,
-        "Dominica": 12.0,
-        "Dominican Republic": 12.0,
-        "Grenada": 12.0,
-        "Guyana": 12.0,
-        "Haiti": 12.0,
-        "Jamaica": 12.0,
-        "St Kitts and Nevis": 12.0,
-        "St Lucia": 12.0,
-        "St Vincent & the Grenadines": 12.0,
-        "Suriname": 16.0,
-        "Trinidad and Tobago": 12.0
-      }
-    },
-    {
-      "programme_area": "Integrated HIV Services (KPI 2.2)",
-      "indicator_desc": "Proportion of facilities providing integrated HIV services.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Continuity of Care (KPI 2.3)",
-      "indicator_desc": "Continuity of ART services / retention proxy.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "ARV medicine stock-out KPI (2.4)",
-      "indicator_desc": "Months in the year without ART stock-out.",
-      "values": {
-        "Antigua and Barbuda": 1.0,
-        "Bahamas": 1.0,
-        "Barbados": 1.0,
-        "Belize": 1.0,
-        "Cuba": 1.0,
-        "Dominica": 1.0,
-        "Dominican Republic": 1.0,
-        "Grenada": 1.0,
-        "Guyana": 1.0,
-        "Haiti": 1.0,
-        "Jamaica": 1.0,
-        "St Kitts and Nevis": 1.0,
-        "St Lucia": 1.0,
-        "St Vincent & the Grenadines": 1.0,
-        "Suriname": 1.0,
-        "Trinidad and Tobago": 1.0
-      }
-    },
-    {
-      "programme_area": "Viral suppression (95-3)",
-      "indicator_desc": "Proportion of people on ART with suppressed viral load.",
-      "values": {
-        "Antigua and Barbuda": 1.0,
-        "Bahamas": 1.0,
-        "Barbados": 1.0,
-        "Belize": 1.0,
-        "Cuba": 1.0,
-        "Dominica": 1.0,
-        "Dominican Republic": 1.0,
-        "Grenada": 1.0,
-        "Guyana": 1.0,
-        "Haiti": 1.0,
-        "Jamaica": 1.0,
-        "St Kitts and Nevis": 1.0,
-        "St Lucia": 1.0,
-        "St Vincent & the Grenadines": 1.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 1.0
-      }
-    },
-    {
-      "programme_area": "Community-led responses (Societal enablers)",
-      "indicator_desc": "Progress on community-led responses and enabling environment.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Key population services scale-up",
-      "indicator_desc": "Service availability and coverage for key populations.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Elimination of mother‑to‑child transmission (EMTCT)",
-      "indicator_desc": "Progress towards EMTCT validation elements.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    },
-    {
-      "programme_area": "Gender and human rights",
-      "indicator_desc": "Reduction of stigma, discrimination, and rights barriers.",
-      "values": {
-        "Antigua and Barbuda": 0.0,
-        "Bahamas": 0.0,
-        "Barbados": 0.0,
-        "Belize": 0.0,
-        "Cuba": 0.0,
-        "Dominica": 0.0,
-        "Dominican Republic": 0.0,
-        "Grenada": 0.0,
-        "Guyana": 0.0,
-        "Haiti": 0.0,
-        "Jamaica": 0.0,
-        "St Kitts and Nevis": 0.0,
-        "St Lucia": 0.0,
-        "St Vincent & the Grenadines": 0.0,
-        "Suriname": 0.0,
-        "Trinidad and Tobago": 0.0
-      }
-    }
-  ]
-}`;
-  document.getElementById('dashboard-data').textContent = RAW_JSON;
+    // ---------- File locations (keep these names if your files match) ----------
+    const GEOJSON_URL = "custom.geo.json";
+    const CSV_URL = "DataList_10_16_2025-3_35_41-PM.csv";   // optional
+    const JSON_URL = "JSON_10_16_2025-3_41_44-PM.json";     // optional
 
-  const state = {
-    data: JSON.parse(document.getElementById('dashboard-data').textContent),
-    originalData: JSON.parse(document.getElementById('dashboard-data').textContent),
-    indicatorIndex: 0,
-    countryFilter: 'All'
-  };
+    // Optional percent scoring config — tweak as needed:
+    const SCORE_RULES = { default: { excellent_min: 95, medium_min: 80 } };
 
-  function hsl(h, s, l){ return `hsl(${h} ${s}% ${l}%)`; }
+    // ---------- Helpers ----------
+    const qs = (sel, el=document) => el.querySelector(sel);
+    const qsa = (sel, el=document) => [...el.querySelectorAll(sel)];
+    const ceilDisp = (v, unit="") => (v==null || isNaN(v)) ? "—" : (String(Math.ceil(+v)) + unit);
 
-  // Map 0..100 to red(0) -> yellow(60) -> green(120)
-  function pctToColor(p){
-    const clamped = Math.max(0, Math.min(100, p));
-    const hue = (clamped * 1.2); // 0..120
-    return hsl(hue, 70, 45);
-  }
-
-  function normalizeValue(v, indicatorRecord){
-    if(v == null || isNaN(v)) return null;
-    // Heuristics: if values are in 0..1, scale to 0..100; if up to 12, scale to months; else if up to 100, keep; else scale by max across countries
-    const values = Object.values(indicatorRecord.values).filter(x => typeof x === 'number');
-    const maxVal = Math.max(...values);
-    if(maxVal <= 1.5){ return v * 100; }
-    if(maxVal <= 12){ return (v/12)*100; }
-    if(maxVal <= 100){ return v; }
-    return (v/maxVal)*100; // relative scale
-  }
-
-  function fmt(p){ return (p == null || isNaN(p)) ? '—' : Math.round(p); }
-
-  function populateFilters(){
-    const indSel = document.getElementById('indicatorSel');
-    const cSel = document.getElementById('countrySel');
-    indSel.innerHTML = '';
-    state.data.records.forEach((rec, idx) => {
-      const opt = document.createElement('option');
-      opt.value = idx; opt.textContent = rec.indicator_desc.replace(/\s+/g,' ').trim().slice(0,160);
-      indSel.appendChild(opt);
-    });
-    indSel.value = state.indicatorIndex;
-
-    cSel.innerHTML = '';
-    const allOpt = document.createElement('option'); allOpt.value = 'All'; allOpt.textContent = 'All Caribbean'; cSel.appendChild(allOpt);
-    state.data.metadata.countries.forEach(c => {
-      const o = document.createElement('option'); o.value = c; o.textContent = `${getFlag(c)} ${c}`; cSel.appendChild(o);
-    });
-    cSel.value = state.countryFilter;
-
-    indSel.addEventListener('change', e => { state.indicatorIndex = +e.target.value; render(); });
-    cSel.addEventListener('change', e => { state.countryFilter = e.target.value; render(); });
-  }
-
-  function renderHeatmap(){
-    const wrap = document.getElementById('heatmap');
-    wrap.innerHTML = '';
-    const rec = state.data.records[state.indicatorIndex];
-    const countries = state.data.metadata.countries;
-
-    countries.forEach(c => {
-      const raw = rec.values[c];
-      const p = normalizeValue(raw, rec);
-      const cell = document.createElement('div');
-      cell.className = 'country-cell';
-      const bg = pctToColor(isNaN(p)?0:p);
-      cell.style.background = `linear-gradient(180deg, ${bg}33, #0f1e30)`; // subtle tint
-
-      const name = document.createElement('div'); name.className = 'country-name'; name.textContent = `${getFlag(c)} ${c}`;
-      const val = document.createElement('div'); val.className = 'country-value'; val.textContent = isNaN(p) ? '—' : `${fmt(p)}%`;
-      const chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = rec.programme_area.replace(/\s+/g,' ').trim().slice(0,60);
-
-      cell.appendChild(name); cell.appendChild(val); cell.appendChild(chip);
-      wrap.appendChild(cell);
-    });
-  }
-
-  function renderCountryDeep(){
-    const host = document.getElementById('countryDeep');
-    host.innerHTML = '';
-    if(state.countryFilter === 'All') return;
-
-    const title = document.createElement('h3'); title.textContent = `Country view — ${state.countryFilter}`;
-    host.appendChild(title);
-
-    const list = document.createElement('div'); list.className = 'grid'; host.appendChild(list);
-
-    state.data.records.forEach((rec) => {
-      const raw = rec.values[state.countryFilter];
-      const p = normalizeValue(raw, rec);
-      const card = document.createElement('div'); card.className = 'card';
-      const name = document.createElement('div'); name.className = 'tiny'; name.textContent = rec.programme_area.replace(/\s+/g,' ').trim();
-      const desc = document.createElement('div'); desc.textContent = rec.indicator_desc.replace(/\s+/g,' ').trim().slice(0,160);
-      const bar = document.createElement('div'); bar.className = 'bar';
-      const fill = document.createElement('span'); fill.style.width = (isNaN(p)?0:p) + '%'; fill.style.background = pctToColor(isNaN(p)?0:p);
-      bar.appendChild(fill);
-      const pct = document.createElement('div'); pct.className = 'tiny'; pct.style.textAlign = 'right'; pct.textContent = isNaN(p)? '—' : `${fmt(p)}%`;
-
-      card.appendChild(name); card.appendChild(desc); card.appendChild(bar); card.appendChild(pct);
-      list.appendChild(card);
-    });
-  }
-
-  function render(){
-    renderHeatmap();
-    renderCountryDeep();
-  }
-
-  // File upload (CSV/.xlsx)
-  function parseCSV(text){
-    const rows = [];
-    let i=0, field='', row=[], inQuotes=false;
-    while(i < text.length){
-      const ch = text[i];
-      if(inQuotes){
-        if(ch === '"' && text[i+1] === '"'){ field += '"'; i+=2; continue; }
-        if(ch === '"'){ inQuotes = false; i++; continue; }
-        field += ch; i++; continue;
-      } else {
-        if(ch === '"'){ inQuotes = true; i++; continue; }
-        if(ch === ','){ row.push(field); field=''; i++; continue; }
-        if(ch === '
-' || ch === '
-'){ if(field !== '' || row.length>0){ row.push(field); rows.push(row); row=[]; field=''; } i++; if(ch==='
-' && text[i]==='
-') i++; continue; }
-        field += ch; i++; continue;
-      }
-    }
-    if(field!=='' || row.length>0){ row.push(field); rows.push(row); }
-    return rows.filter(r=>r.some(c=>c!==''));
-  }
-  function rowsToData(rows){
-    if(!rows.length) return null;
-    const header = rows[0];
-    const programmeIdx = 0, indicatorIdx = 1;
-    const countryCols = header.slice(2).map(h=>h.trim()).filter(Boolean);
-    const records = rows.slice(1).map(r=>{
-      const values = {};
-      countryCols.forEach((c, idx)=>{
-        const v = r[2+idx];
-        const num = v===''||v==null ? null : Number(v);
-        values[c] = (Number.isFinite(num)? num : null);
-      });
-      return { programme_area: r[programmeIdx]||'', indicator_desc: r[indicatorIdx]||'', values };
-    });
-    return { metadata: { countries: countryCols, sheet: 'Uploaded CSV' }, records };
-  }
-  function handleUpload(file){
-    const ext = file.name.toLowerCase().split('.').pop();
-    if(ext === 'xlsx'){
-      alert('Excel (.xlsx) parsing requires an external library. Please export your sheet as CSV and upload the CSV here.');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = reader.result; const rows = parseCSV(text);
-      const parsed = rowsToData(rows);
-      if(parsed && parsed.records && parsed.records.length){
-        state.data = parsed; state.countryFilter = 'All'; state.indicatorIndex = 0; populateFilters(); render();
-      } else {
-        alert('Could not parse CSV. Expect columns: programme_area, indicator_desc, then one column per country.');
-      }
+    const isPercentIndicator = (label) => {
+      if (!label) return false;
+      const L = label.toLowerCase();
+      return L.includes("%") || L.includes("percent");
     };
-    reader.readAsText(file);
-  }
-  function toCSV(rows){
-    return rows.map(r=>r.map(v=>{
-      const s = (v==null?'' : String(v));
-      return /[",
 
-]/.test(s) ? '"'+s.replaceAll('"','""')+'"' : s;
-    }).join(',')).join('
-');
-  }
-  function exportIndicatorCSV(){
-    const rec = state.data.records[state.indicatorIndex];
-    const header = ['programme_area','indicator_desc',...state.data.metadata.countries];
-    const row = [rec.programme_area, rec.indicator_desc, ...state.data.metadata.countries.map(c=>{
-      const p = normalizeValue(rec.values[c], rec); return Number.isFinite(p)? Math.round(p) : '';
-    })];
-    const csv = toCSV([header, row]);
-    const blob = new Blob([csv], {type:'text/csv'});
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'caribbean_indicator_heatmap.csv' });
-    document.body.appendChild(a); a.click(); a.remove();
-  }
-  function exportAllCSV(){
-    const header = ['programme_area','indicator_desc','country','value'];
-    const rows = [header];
-    state.data.records.forEach(rec=>{
-      state.data.metadata.countries.forEach(c=>{
-        rows.push([rec.programme_area, rec.indicator_desc, c, rec.values[c]]);
-      })
-    });
-    const csv = toCSV(rows);
-    const blob = new Blob([csv], {type:'text/csv'});
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'caribbean_hiv_dashboard_raw.csv' });
-    document.body.appendChild(a); a.click(); a.remove();
-  }
-  function downloadJSON(){
-    const blob = new Blob([JSON.stringify(state.data, null, 2)], {type:'application/json'});
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'caribbean_hiv_dashboard.json' });
-    document.body.appendChild(a); a.click(); a.remove();
-  }
-  function printPDF(){ window.print(); }
-  function resetData(){ state.data = JSON.parse(JSON.stringify(state.originalData)); state.countryFilter = 'All'; state.indicatorIndex = 0; populateFilters(); render(); }
+    const thresholdsForIndicator = (label) => {
+      if (isPercentIndicator(label)) {
+        const r = SCORE_RULES?.default ?? { excellent_min: 95, medium_min: 80 };
+        return { _type: "percent", ...r };
+      }
+      // Non-percent thresholds (requested):
+      return { _type: "nonpct_fixed", good_min: 500, medium_min: 200, medium_max: 500 };
+    };
 
-  // Init
-  (function(){
-    document.getElementById('year').textContent = new Date().getFullYear();
-    populateFilters();
-    render();
+    const statusFromThresholds = (v, th) => {
+      if (v == null || isNaN(v)) return "no_data";
+      if (th._type === "percent") {
+        if (v >= th.excellent_min) return "excellent";
+        if (v >= th.medium_min) return "medium";
+        return "insufficient";
+      }
+      if (th._type === "nonpct_fixed") {
+        if (v > th.good_min) return "good";
+        if (v >= th.medium_min && v <= th.medium_max) return "medium";
+        return "insufficient";
+      }
+      return "insufficient";
+    };
 
-    // Wire toolbar actions
-    const up = document.getElementById('uploadFile'); if(up){ up.addEventListener('change', (e)=>{ if(e.target.files && e.target.files[0]) handleUpload(e.target.files[0]); }); }
-    const b1 = document.getElementById('btnExportIndicator'); if(b1) b1.addEventListener('click', exportIndicatorCSV);
-    const b2 = document.getElementById('btnExportAll'); if(b2) b2.addEventListener('click', exportAllCSV);
-    const b3 = document.getElementById('btnDownloadJSON'); if(b3) b3.addEventListener('click', downloadJSON);
-    const b4 = document.getElementById('btnPrint'); if(b4) b4.addEventListener('click', printPDF);
-    const b5 = document.getElementById('btnResetData'); if(b5) b5.addEventListener('click', resetData);
-  })();
+    const toast = (msg, ok) => {
+      const s = qs("#upload-status");
+      s.textContent = msg;
+      s.style.color = ok ? "var(--green)" : "var(--red)";
+      setTimeout(() => (s.textContent = ""), 2200);
+    };
+
+    // ---------- Data loading ----------
+    async function tryFetchText(url) {
+      try {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(r.statusText);
+        return await r.text();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function tryFetchJSON(url) {
+      try {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(r.statusText);
+        return await r.json();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function parseCSV(text) {
+      // Tiny CSV reader (no quotes-escaping edge cases). For robust parsing, swap for PapaParse.
+      const [headerLine, ...lines] = text.split(/\r?\n/).filter(Boolean);
+      const headers = headerLine.split(",").map((s) => s.trim());
+      return lines.map((line) => {
+        const cells = line.split(",").map((s) => s.trim());
+        const o = {};
+        headers.forEach((h, i) => (o[h] = cells[i]));
+        return o;
+      });
+    }
+
+    function toNumberOrNull(x) {
+      const v = +x;
+      return Number.isFinite(v) ? v : null;
+    }
+
+    function rowToRecord(row) {
+      // Attempt to read common column names in your files
+      const cn =
+        row.E_Count || row.Country || row.Area || row.country_name || row.name || "";
+      const iso3 = row.ISO3 || row.iso3 || row.ISO_A3 || row.adm0_a3 || "";
+      const year = toNumberOrNull(row.Time ?? row.year);
+      const val = toNumberOrNull(row.Value ?? row.value);
+      // Indicator label:
+      const label = (row.E_Ind || row.AcronymCombined || row.Acronym || row.indicator || "Indicator").trim();
+      if (!cn || !iso3 || year == null || val == null) return null;
+
+      const unit = isPercentIndicator(label) ? "%" : "";
+      return { country_name: String(cn).trim(), iso3: String(iso3).trim(), year, value: val, indicator: label, unit };
+    }
+
+    function normalizeJSONRows(data) {
+      if (!data) return [];
+      if (Array.isArray(data)) return data;
+      // Sometimes JSON might be an object with a key containing rows
+      // Fallback: collect array-like values
+      for (const k of Object.keys(data)) {
+        if (Array.isArray(data[k])) return data[k];
+      }
+      return [];
+    }
+
+    async function loadHealthData() {
+      const rows = [];
+
+      // CSV
+      const csvText = await tryFetchText(CSV_URL);
+      if (csvText) {
+        const parsed = parseCSV(csvText);
+        parsed.forEach((r) => rows.push(r));
+      }
+
+      // JSON
+      const jsonObj = await tryFetchJSON(JSON_URL);
+      if (jsonObj) {
+        const list = normalizeJSONRows(jsonObj);
+        list.forEach((r) => rows.push(r));
+      }
+
+      // Map to tidy records
+      const records = [];
+      rows.forEach((r) => {
+        const rec = rowToRecord(r);
+        if (rec) records.push(rec);
+      });
+
+      return records;
+    }
+
+    function featISO(props) {
+      // Robust property resolution for various GeoJSON schemas
+      return (
+        props.ISO_A3 ||
+        props.iso_a3 ||
+        props.adm0_a3 ||
+        props.gu_a3 ||
+        props.su_a3 ||
+        props.adm0_a3_us ||
+        ""
+      );
+    }
+    function featName(props) {
+      return (
+        props.ADMIN ||
+        props.admin ||
+        props.name_long ||
+        props.name ||
+        props.formal_en ||
+        ""
+      );
+    }
+
+    // ---------- State ----------
+    const app = {
+      data: [],         // tidy rows
+      geo: null,        // GeoJSON FeatureCollection
+      countries: [],    // [{iso3, name}]
+      indicators: [],   // [string]
+      allYears: [],     // [number]
+      state: { indicator: "", countries: [], yearRange: [2010, 2025] },
+      map: null,
+      mapLayer: null
+    };
+
+    // ---------- UI setup ----------
+    let choicesIndicator, choicesCountries;
+
+    function setupFilters() {
+      // Indicator
+      choicesIndicator = new Choices("#indicator-select", {
+        searchEnabled: true, shouldSort: true,
+      });
+      choicesIndicator.setChoices(
+        app.indicators.map((x) => ({ value: x, label: x })),
+        "value",
+        "label",
+        true
+      );
+      if (app.state.indicator) {
+        choicesIndicator.setChoiceByValue(app.state.indicator);
+      }
+      qs("#indicator-select").addEventListener("change", (e) => {
+        app.state.indicator = e.target.value;
+        updateAll();
+      });
+
+      // Countries (multi)
+      choicesCountries = new Choices("#country-select", {
+        removeItemButton: true,
+        searchEnabled: true,
+        shouldSort: true,
+      });
+      choicesCountries.setChoices(
+        app.countries.map((c) => ({ value: c.iso3, label: c.name })),
+        "value",
+        "label",
+        true
+      );
+      if (app.state.countries?.length) {
+        choicesCountries.setChoiceByValue(app.state.countries);
+      } else if (app.countries[0]) {
+        choicesCountries.setChoiceByValue([app.countries[0].iso3]);
+        app.state.countries = [app.countries[0].iso3];
+      }
+
+      qs("#country-select").addEventListener("change", (e) => {
+        app.state.countries = [...e.target.selectedOptions].map((o) => o.value);
+        updateAll();
+      });
+
+      // Year slider
+      const sliderEl = qs("#year-slider");
+      const minY = app.allYears[0] || 2010;
+      const maxY = app.allYears[app.allYears.length - 1] || 2025;
+      noUiSlider.create(sliderEl, {
+        start: app.state.yearRange,
+        connect: true,
+        step: 1,
+        range: { min: minY, max: maxY },
+        format: { to: (v) => Math.round(v), from: (v) => +v },
+      });
+      sliderEl.noUiSlider.on("change", (vals) => {
+        app.state.yearRange = [+vals[0], +vals[1]];
+        updateAll();
+      });
+
+      qs("#btn-last5").addEventListener("click", () => {
+        const to = maxY;
+        const from = to - 4;
+        sliderEl.noUiSlider.set([from, to]);
+        app.state.yearRange = [from, to];
+        updateAll();
+      });
+      qs("#btn-last10").addEventListener("click", () => {
+        const to = maxY;
+        const from = to - 9;
+        sliderEl.noUiSlider.set([from, to]);
+        app.state.yearRange = [from, to];
+        updateAll();
+      });
+
+      // Share/reset
+      qs("#share-link-btn").addEventListener("click", async () => {
+        const params = new URLSearchParams();
+        params.set("indicator", app.state.indicator);
+        params.set("countries", app.state.countries.join(","));
+        params.set("from", app.state.yearRange[0]);
+        params.set("to", app.state.yearRange[1]);
+        const url = location.origin + location.pathname + "#charts?" + params.toString();
+        try {
+          await navigator.clipboard.writeText(url);
+          toast("Share link copied to clipboard.", true);
+        } catch {
+          toast("Couldn't copy. Copy from the address bar.", false);
+        }
+      });
+
+      qs("#reset-filters-btn").addEventListener("click", () => {
+        app.state.indicator = app.indicators[0] || "";
+        app.state.countries = app.countries[0] ? [app.countries[0].iso3] : [];
+        app.state.yearRange = [minY, maxY];
+        choicesIndicator.setChoiceByValue(app.state.indicator);
+        choicesCountries.removeActiveItems(true);
+        choicesCountries.setChoiceByValue(app.state.countries);
+        sliderEl.noUiSlider.set(app.state.yearRange);
+        updateAll();
+      });
+    }
+
+    // ---------- Views routing ----------
+    function setActiveNav(view) {
+      qsa(".app-nav a").forEach((a) =>
+        a.classList.toggle("active", a.getAttribute("href") === "#" + view)
+      );
+    }
+    function showView(view) {
+      qsa(".view").forEach((v) => v.classList.remove("active"));
+      const el = qs("#" + view + "-view");
+      if (el) {
+        el.classList.add("active");
+        setActiveNav(view);
+        if (view === "map") {
+          initMap();
+          setTimeout(refreshMapLayout, 20);
+        }
+      }
+    }
+    function handleRouteChange() {
+      const hash = window.location.hash || "#overview";
+      const view = hash.substring(1).split("?")[0];
+      showView(view);
+    }
+
+    // ---------- Summary ----------
+    function renderSummary() {
+      qs("#summary-indicator .card-value").textContent =
+        app.state.indicator || "—";
+      qs("#summary-countries .card-value").textContent =
+        app.state.countries.length;
+      qs("#summary-years .card-value").textContent =
+        app.state.yearRange.join(" – ");
+    }
+
+    // ---------- Charts ----------
+    function renderCharts() {
+      const wrap = d3.select("#charts-container");
+      const placeholder = d3.select("#charts-placeholder");
+      const tooltip = d3.select("#tooltip");
+      wrap.selectAll("svg").remove();
+
+      if (!app.state.indicator || app.state.countries.length === 0) {
+        placeholder.style("display", "block");
+        return;
+      }
+      placeholder.style("display", "none");
+
+      const margin = { top: 16, right: 24, bottom: 32, left: 48 };
+      const rect = qs("#charts-container").getBoundingClientRect();
+      const width = Math.max(520, rect.width - margin.left - margin.right);
+      const height = 360;
+      const svg = wrap
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+      const g = svg
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const filtered = app.data.filter(
+        (d) =>
+          d.indicator === app.state.indicator &&
+          app.state.countries.includes(d.iso3) &&
+          d.year >= app.state.yearRange[0] &&
+          d.year <= app.state.yearRange[1]
+      );
+
+      if (!filtered.length) {
+        placeholder.style("display", "block");
+        return;
+      }
+
+      const x = d3
+        .scaleLinear()
+        .domain(d3.extent(filtered, (d) => d.year))
+        .range([0, width]);
+      const y = d3
+        .scaleLinear()
+        .domain(d3.extent(filtered, (d) => d.value))
+        .nice()
+        .range([height, 0]);
+      const line = d3
+        .line()
+        .x((d) => x(d.year))
+        .y((d) => y(d.value));
+      const color = d3
+        .scaleOrdinal()
+        .domain(app.state.countries)
+        .range(d3.schemeTableau10);
+
+      g.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+      g.append("g").call(d3.axisLeft(y));
+      g.append("text")
+        .attr("x", width)
+        .attr("y", -6)
+        .attr("text-anchor", "end")
+        .attr("font-weight", "600")
+        .text(app.state.indicator);
+
+      const nested = d3.group(filtered, (d) => d.iso3);
+      for (const [iso, arr] of nested) {
+        arr.sort((a, b) => a.year - b.year);
+        g.append("path")
+          .datum(arr)
+          .attr("fill", "none")
+          .attr("stroke", color(iso))
+          .attr("stroke-width", 2)
+          .attr("d", line);
+        g.selectAll(".pt-" + iso)
+          .data(arr)
+          .enter()
+          .append("circle")
+          .attr("class", "pt-" + iso)
+          .attr("r", 3)
+          .attr("cx", (d) => x(d.year))
+          .attr("cy", (d) => y(d.value))
+          .attr("fill", color(iso))
+          .on("mouseenter", (event, d) => {
+            const unit = isPercentIndicator(app.state.indicator) ? "%" : "";
+            tooltip
+              .style("opacity", 1)
+              .html(
+                `<strong>${getCountryName(iso)}</strong><br>${d.year}: <b>${ceilDisp(
+                  d.value,
+                  unit
+                )}</b>`
+              );
+          })
+          .on("mousemove", (event) => {
+            tooltip
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 28 + "px");
+          })
+          .on("mouseleave", () => tooltip.style("opacity", 0));
+      }
+
+      // Legend
+      const lg = g.append("g").attr("transform", `translate(0,${height + 28})`);
+      let lx = 0;
+      for (const iso of app.state.countries) {
+        const name = getCountryName(iso);
+        const grp = lg.append("g").attr("transform", `translate(${lx},0)`);
+        grp.append("rect").attr("width", 12).attr("height", 12).attr("fill", color(iso));
+        grp.append("text").attr("x", 18).attr("y", 11).text(name);
+        lx += 18 + name.length * 7 + 24;
+      }
+    }
+
+    function getCountryName(iso3) {
+      const f = app.countries.find((c) => c.iso3 === iso3);
+      return f ? f.name : iso3;
+    }
+
+    // ---------- Map ----------
+    function initMap() {
+      if (app.map) return;
+      app.map = L.map("map");
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        { attribution: "&copy; OpenStreetMap & CARTO", subdomains: "abcd", maxZoom: 19 }
+      ).addTo(app.map);
+
+      try {
+        const gj = L.geoJson(app.geo);
+        app.map.fitBounds(gj.getBounds(), { padding: [20, 20] });
+      } catch {
+        app.map.setView([17, -75], 4);
+      }
+      updateChoropleth();
+      setupTimeSlider();
+    }
+
+    function setupTimeSlider() {
+      const slider = qs("#time-slider");
+      const label = qs("#time-slider-label");
+      slider.min = app.allYears[0] || 2010;
+      slider.max = app.allYears[app.allYears.length - 1] || 2025;
+      slider.value = app.state.yearRange[1];
+      label.textContent = "Year: " + slider.value;
+
+      slider.addEventListener("input", (e) => {
+        const y = +e.target.value;
+        label.textContent = "Year: " + y;
+        app.state.yearRange = [app.state.yearRange[0], y];
+        updateAll();
+      });
+
+      let interval = null;
+      qs("#play-pause-btn").addEventListener("click", () => {
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+          qs("#play-pause-btn").textContent = "▶";
+        } else {
+          qs("#play-pause-btn").textContent = "❚❚";
+          interval = setInterval(() => {
+            let v = +slider.value + 1;
+            if (v > +slider.max) v = +slider.min;
+            slider.value = v;
+            slider.dispatchEvent(new Event("input"));
+          }, 800);
+        }
+      });
+    }
+
+    function updateChoropleth() {
+      if (!app.map || !app.geo) return;
+
+      const year = app.state.yearRange[1];
+      const subset = app.data.filter(
+        (d) => d.year === year && d.indicator === app.state.indicator
+      );
+
+      const valMap = new Map(subset.map((d) => [d.iso3, d]));
+      const values = subset.map((d) => d.value).filter((v) => v != null && !isNaN(v));
+      const color =
+        values.length > 1
+          ? d3.scaleQuantize().domain(d3.extent(values)).range(d3.schemeBlues[7])
+          : () => "#bdbdbd";
+
+      if (app.mapLayer) app.map.removeLayer(app.mapLayer);
+
+      app.mapLayer = L.geoJson(app.geo, {
+        style: (f) => {
+          const iso = featISO(f.properties || {});
+          const rec = valMap.get(iso);
+          const fill = rec ? color(rec.value) : "#bdbdbd";
+          return { color: "#fff", weight: 1, fillColor: fill, fillOpacity: 0.8 };
+        },
+        onEachFeature: (feature, layer) => {
+          const props = feature.properties || {};
+          const iso = featISO(props);
+          const name = featName(props) || iso;
+          const rec = valMap.get(iso);
+          const unit = isPercentIndicator(app.state.indicator) ? "%" : "";
+          const valTxt = rec ? ceilDisp(rec.value, unit) : "No data";
+          layer.bindTooltip(`<strong>${name}</strong><br>${year}: ${valTxt}`);
+          layer.on("mouseover", () => layer.setStyle({ weight: 2, color: "var(--accent-color)" }));
+          layer.on("mouseout", () => app.mapLayer.resetStyle(layer));
+        },
+      }).addTo(app.map);
+
+      drawLegend(color);
+    }
+
+    function drawLegend(color) {
+      const div = qs("#map-legend");
+      if (!div) return;
+      const hasThresholds = typeof color.thresholds === "function";
+      const grades = hasThresholds ? color.thresholds() : [];
+      const domain = hasThresholds ? color.domain() : null;
+
+      let html = '<div class="map-legend"><div><strong>Legend</strong></div>';
+      if (grades && grades.length) {
+        for (let i = 0; i < grades.length; i++) {
+          const from = grades[i];
+          const to = grades[i + 1];
+          html += `<div><span class="legend-swatch" style="background:${color(from)}"></span>${from.toFixed(0)}${to ? "–" + to.toFixed(0) : "+"}</div>`;
+        }
+      } else if (domain) {
+        html += `<div><span class="legend-swatch" style="background:${color(domain[0])}"></span>${domain[0].toFixed(0)}–${domain[1].toFixed(0)}</div>`;
+      } else {
+        html += `<div><span class="legend-swatch" style="background:#bdbdbd"></span>No data</div>`;
+      }
+      html += "</div>";
+      div.innerHTML = html;
+    }
+
+    function refreshMapLayout() {
+      if (app.map) app.map.invalidateSize();
+    }
+
+    // ---------- Scorecards ----------
+    function renderScorecards() {
+      const holder = d3.select("#scorecard-grid");
+      holder.selectAll("*").remove();
+
+      const latestYear = app.state.yearRange[1];
+      const rows = app.data.filter(
+        (d) =>
+          d.indicator === app.state.indicator &&
+          d.year === latestYear &&
+          app.state.countries.includes(d.iso3)
+      );
+
+      const th = thresholdsForIndicator(app.state.indicator);
+
+      const cards = holder
+        .selectAll(".scorecard")
+        .data(app.state.countries)
+        .enter()
+        .append("div")
+        .attr("class", (iso) => {
+          const rec = rows.find((r) => r.iso3 === iso);
+          const s = rec ? statusFromThresholds(rec.value, th) : "no_data";
+          return "card scorecard status-" + s;
+        });
+
+      cards.each(function (iso) {
+        const rec = rows.find((r) => r.iso3 === iso);
+        const s = rec ? statusFromThresholds(rec.value, th) : "no_data";
+        const unit = isPercentIndicator(app.state.indicator) ? "%" : "";
+        const name = getCountryName(iso);
+        const el = d3.select(this);
+
+        el.append("div").attr("class", "card-header").html(`<h3 style="margin:0">${name}</h3>`);
+        el.append("div")
+          .attr("class", "scorecard-value")
+          .text(rec ? ceilDisp(rec.value, unit) : "—");
+
+        const badgeClass =
+          s === "good"
+            ? "badge-good"
+            : s === "medium"
+            ? "badge-medium"
+            : s === "insufficient"
+            ? "badge-insufficient"
+            : "badge-no_data";
+        el.append("div")
+          .attr("class", "scorecard-badge " + badgeClass)
+          .text(s.replace("_", " ").toUpperCase());
+      });
+    }
+
+    // ---------- Exports ----------
+    function setupExports() {
+      qs("#export-png-btn").addEventListener("click", async () => {
+        const node = qs("#charts-container");
+        const canvas = await html2canvas(node, { backgroundColor: "#fff", scale: 2 });
+        const link = document.createElement("a");
+        link.download = "chart.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+      qs("#export-svg-btn").addEventListener("click", () => {
+        const svg = qs("#charts-container svg");
+        if (!svg) {
+          alert("No chart to export.");
+          return;
+        }
+        const blob = new Blob([svg.outerHTML], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "chart.svg";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+    }
+
+    // ---------- Render orchestration ----------
+    function updateAll() {
+      renderSummary();
+      renderCharts();
+      renderScorecards();
+      if (app.map) updateChoropleth();
+      reflectStateToHash();
+    }
+
+    function reflectStateToHash() {
+      const params = new URLSearchParams();
+      params.set("indicator", app.state.indicator);
+      params.set("countries", app.state.countries.join(","));
+      params.set("from", app.state.yearRange[0]);
+      params.set("to", app.state.yearRange[1]);
+      const base = (location.hash.split("?")[0] || "#overview");
+      history.replaceState(null, "", base + "?" + params.toString());
+    }
+
+    function hydrateFromHash() {
+      const qsParams = new URLSearchParams(location.hash.split("?")[1] || "");
+      const ind = qsParams.get("indicator");
+      const ctr = (qsParams.get("countries") || "")
+        .split(",")
+        .filter(Boolean);
+      const from = +qsParams.get("from");
+      const to = +qsParams.get("to");
+      if (ind && app.indicators.includes(ind)) app.state.indicator = ind;
+      if (ctr.length) app.state.countries = ctr.filter((c) => app.countries.some((x) => x.iso3 === c));
+      if (!isNaN(from) && !isNaN(to)) app.state.yearRange = [from, to];
+    }
+
+    // ---------- Boot ----------
+    async function boot() {
+      // Load GeoJSON
+      const geo = await tryFetchJSON(GEOJSON_URL);
+      if (!geo) {
+        alert("Could not load custom.geo.json.");
+        return;
+      }
+      app.geo = geo;
+
+      // Load data
+      const data = await loadHealthData();
+      app.data = data;
+
+      // Countries & years derived from data (fall back to geo names if data empty)
+      const isoToName = new Map();
+      if (data.length) {
+        data.forEach((d) => isoToName.set(d.iso3, d.country_name));
+      } else if (geo?.features?.length) {
+        for (const f of geo.features) {
+          const p = f.properties || {};
+          const iso = featISO(p);
+          const name = featName(p);
+          if (iso) isoToName.set(iso, name || iso);
+        }
+      }
+      app.countries = [...isoToName.entries()]
+        .map(([iso3, name]) => ({ iso3, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      app.indicators = [...new Set(data.map((d) => d.indicator))].sort((a, b) =>
+        a.localeCompare(b)
+      );
+      app.allYears = [...new Set(data.map((d) => d.year))].sort((a, b) => a - b);
+
+      // Initial state
+      app.state.indicator = app.indicators[0] || "";
+      app.state.countries = app.countries[0] ? [app.countries[0].iso3] : [];
+      app.state.yearRange = [
+        app.allYears[0] || 2010,
+        app.allYears[app.allYears.length - 1] || 2025,
+      ];
+
+      setupFilters();
+      setupExports();
+      hydrateFromHash();
+      updateAll();
+
+      window.addEventListener("hashchange", handleRouteChange);
+      handleRouteChange();
+    }
+
+    document.addEventListener("DOMContentLoaded", boot);
   </script>
-
-  <script>
-    // Inject JSON string prepared server-side
-    (function(){
-      const placeholder = 'REPLACED_JSON_PLACEHOLDER';
-      document.body.innerHTML = document.body.innerHTML.replaceAll(placeholder, JSON.stringify(JSON.parse(document.getElementById('dashboard-data').textContent)));
-    })();
-  </script>
-
-  <!--
-    Implementation notes
-    - No external frameworks. Pure HTML/CSS/JS.
-    - Values normalized via heuristic for cross-indicator comparability.
-    - Green→yellow→red gradient communicates relative achievement.
-    - Smooth layout that prints cleanly (File → Print) for quick briefings.
-  -->
 </body>
 </html>

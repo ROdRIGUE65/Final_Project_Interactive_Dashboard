@@ -305,7 +305,23 @@
       <div class="content-wrapper">
         <div id="overview-view" class="view active">
           <h1>Welcome to the Caribbean HIV KPI Dashboard (Americas GeoJSON)</h1>
-          <p>This version loads your North/South America + Caribbean GeoJSON and applies non-percent scoring thresholds & rounding up for all displayed values.</p>
+          <p>This version loads your North/South America + Caribbean GeoJSON and applies non-percent scoring thresholds &amp; rounding up for all displayed values.</p>
+
+          <!-- Embedded description card -->
+          <div class="card" id="overview-description">
+            <h2 style="margin-top:0">Overview</h2>
+            <p><strong>One-pager structure:</strong></p>
+            <ul>
+              <li>SPA routing for Overview / Charts / Map / Scorecard / About</li>
+              <li>Indicator &amp; Country filters + Year range</li>
+              <li>Summary cards update live</li>
+              <li>Charts: simple multi-line D3 chart with tooltip + PNG/SVG export</li>
+              <li>Map: Leaflet base map with play/pause year slider label (GeoJSON and choropleth logic)</li>
+              <li>Scorecards: status color borders (based on thresholds) + mini sparklines</li>
+              <li>Share link button writes the current filters into the URL hash</li>
+            </ul>
+          </div>
+
           <div class="summary-cards-grid">
             <div class="card summary-card" id="summary-indicator">
               <div class="card-title">Selected Indicator</div>
@@ -363,7 +379,7 @@
           <h1>About</h1>
           <ul>
             <li>Loads your <code>custom.geo.json</code> (Americas incl. Caribbean).</li>
-            <li>Non-percent thresholds & rounding up applied everywhere.</li>
+            <li>Non-percent thresholds &amp; rounding up applied everywhere.</li>
           </ul>
         </div>
       </div>
@@ -783,6 +799,8 @@
           .attr("fill", color(iso))
           .on("mouseenter", (event, d) => {
             const unit = isPercentIndicator(app.state.indicator) ? "%" : "";
+            const tooltipEl = qs("#tooltip");
+            const rect = tooltipEl.getBoundingClientRect();
             tooltip
               .style("opacity", 1)
               .html(
